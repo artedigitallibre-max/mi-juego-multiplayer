@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script src="https://unpkg.com/colyseus.js@^0.14.0/dist/colyseus.js"></script>
+</head>
+<body>
+    <script>
+        const config = {
+            type: Phaser.AUTO,
+            width: 800, height: 600,
+            scene: { preload, create, update }
+        };
+        const game = new Phaser.Game(config);
+        let room, localPlayer;
+
+        async function create() {
+            const client = new Colyseus.Client("wss://mi-juego-multiplayer.onrender.com");
+            room = await client.joinOrCreate("sala_juego");
+
+            // Crear el sprite cuando alguien entra
+            room.state.jugadores.onAdd = (jugador, id) => {
+                const graphics = this.add.rectangle(jugador.x, jugador.y, 40, 40, 0x00ff00);
+                if (id === room.sessionId) localPlayer = graphics;
+            };
+        }
+
+        function update() {
+            if (localPlayer && room) {
+                // Movimiento básico para probar (luego pondremos táctil)
+                const mouse = this.input.activePointer;
+                if (mouse.isDown) {
+                    room.send("mover", { x: mouse.x, y: mouse.y });
+                    localPlayer.x = mouse.x;
+                    localPlayer.y = mouse.y;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
